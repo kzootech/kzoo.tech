@@ -1,0 +1,97 @@
+<!DOCTYPE html>
+<html>
+<head>
+	<title>kzoo.tech</title>
+
+	<style>
+		:root {
+			--palette1: #f2f3f0; /* white */
+			--palette2: #8e8d80; /* olive */
+			--palette3: #939aa0; /* grey */
+			--palette4: #876759; /* brown */
+			--palette5: #3a3336; /* black */
+		}
+
+		body {
+			background-color: var(--palette5);
+			color: var(--palette2);
+			margin: 5em auto;
+			max-width: 35em;
+		}
+
+		h1,h2,h3,h4,h5 {
+			color: var(--palette4);
+		}
+
+		a {
+			color: var(--palette3);
+		}
+
+		code {
+			color: var(--palette1);
+			background-color: rgba(0,0,0,.5);
+			display: block;
+			padding: 1em;
+			overflow: hidden;
+			font-size: small;
+		}
+
+		header {
+			background-color: var(--palette5);
+			position: fixed;
+			top: 0;
+			margin: 0 auto;
+			width: 50em;
+			padding: 1em 0;
+			vertical-align: bottom;
+			font-size: small;
+			user-select: none;
+		}
+
+		footer {
+			text-align: right;
+			font-style: italic;
+			font-size: small;
+		}
+	</style>
+</head>
+<body>
+<header>
+[<a href="https://kzoo.tech">kzoo.tech</a>]
+ / [<a href='https://kzoo.tech/openbsd-mc7700'>openbsd-mc7700</a>]
+
+</header>
+<h1>Sierra Wireless MC7700 WWAN Modem</h1>
+
+<p>The Sierra Wireless MC7700 is a MiniPCI cellular modem card designed for use in
+laptops.</p>
+
+<p>The Sierra Wireless MC7700 modem can come configured in either DirectIP Mode or 
+QSM mode. This guides assumes the modem is configured in QSM mode.</p>
+
+<p>The modem's mode can be switched by changing the effective PCI ID of the device. 
+To set the modem to QSM mode change the PCI ID of the device to 68a2 as shown
+below.</p>
+
+<pre><code>x230# cu -l /dev/cuaU2
+Connected to /dev/cuaU2 (speed 9600)
+AT!ENTERCND="OEM password"
+OK
+AT!UDPID=68A2
+OK
+AT!RESET
+OK
+
+[EOT]
+x230#
+</code></pre>
+
+<p>The device mode can be changed to DirectIP by changing the PCI ID to 68A3 in a 
+similar fashion as above. Changing the device to 68A3 (DirectIP Mode) is <strong>NOT
+RECOMMENDED</strong> as this PCI ID is not authorized by the OEM X230 BIOS whitelist.</p>
+
+<footer>
+Last Modified: 2020 Aug 14
+</footer>
+</body>
+</html>

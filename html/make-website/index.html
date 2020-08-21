@@ -1,0 +1,137 @@
+<!DOCTYPE html>
+<html>
+<head>
+	<title>kzoo.tech</title>
+
+	<style>
+		:root {
+			--palette1: #f2f3f0; /* white */
+			--palette2: #8e8d80; /* olive */
+			--palette3: #939aa0; /* grey */
+			--palette4: #876759; /* brown */
+			--palette5: #3a3336; /* black */
+		}
+
+		body {
+			background-color: var(--palette5);
+			color: var(--palette2);
+			margin: 5em auto;
+			max-width: 35em;
+		}
+
+		h1,h2,h3,h4,h5 {
+			color: var(--palette4);
+		}
+
+		a {
+			color: var(--palette3);
+		}
+
+		code {
+			color: var(--palette1);
+			background-color: rgba(0,0,0,.5);
+			display: block;
+			padding: 1em;
+			overflow: hidden;
+			font-size: small;
+		}
+
+		header {
+			background-color: var(--palette5);
+			position: fixed;
+			top: 0;
+			margin: 0 auto;
+			width: 50em;
+			padding: 1em 0;
+			vertical-align: bottom;
+			font-size: small;
+			user-select: none;
+		}
+
+		footer {
+			text-align: right;
+			font-style: italic;
+			font-size: small;
+		}
+	</style>
+</head>
+<body>
+<header>
+[<a href="https://kzoo.tech">kzoo.tech</a>]
+ / [<a href='https://kzoo.tech/make-website'>make-website</a>]
+
+</header>
+<h1>Building a Makefile-based Website</h1>
+
+<p>This guide documents a <a href="https://man.openbsd.org/make">Makefile-based</a> website generator 
+written to work with tools that are typically found on a "stock" BSD
+installation. The generator parses <a href="https://daringfireball.net/projects/markdown">Markdown</a> files into HTML
+pages, which can be served using any web server, such as OpenBSD's 
+<a href="https://man.openbsd.org/make">httpd(8)</a>. This guide loosely based on John Hawthorn's 
+<a href="https://johnhawthorn.com/2018/01/this-website-is-a-makefile/">This Website is a Makefile</a> article.</p>
+
+<h2>template.pl</h2>
+
+<p>The template file generates an HTML document from a valid Markdown file passed
+in as the only command-line argument. This template can be modified to the needs
+of a particular website. </p>
+
+<p>This file makes use of <a href="https://metacpan.org/pod/Text::Markdown">Text::Markdown</a> to convert Markdown files
+into HTML documents. Note that the Makefile adds perl5lib/ as an additional 
+directory when searching for modules and Text/Markdown.pl can be installed
+locally to this location.</p>
+
+<p>This file contains some additional methods for adding
+breadcrumbs and a date stamp to each HTML document rendered.</p>
+
+<p>include(template.pl)</p>
+
+<h2>Makefile.site</h2>
+
+<h2>Makefile</h2>
+
+<pre><code>prompt# cat template.pl
+.PHONY: all clean preview publish
+.DEFAULT: all
+
+.include "Makefile.site"
+
+# commands
+SRC   != find . -type f -name "*.md" ! -name "index.md" | sed "s/\.\///g"
+PERL  := PERL5LIB=perl5lib/ perl
+RSYNC := openrsync --rsync-path=openrsync
+
+# render html
+all: $(SRC:%.md=html/%/index.html) html/index.html
+
+html/index.html: index.md template.pl
+  $(PERL) template.pl index.md &gt; html/index.html
+
+.for page in $(SRC:%.md=%)
+html/$(page)/index.html: $(page).md template.pl
+  mkdir -p html/$(page)
+  $(PERL) template.pl $(page).md &gt; html/$(page)/index.html
+.endfor
+
+# publish/preview using rsync; requires user-interaction
+preview:
+  $(RSYNC) -r --del html/ $(PREVIEW-DIR)/
+
+publish:
+  $(RSYNC) -r --del html/ $(RELEASE-DIR)/
+
+# remove build files
+clean:
+  rm -rf html/index.html
+  for dir in $(SRC:%.md='%'); do \
+    rm -rf html/$${dir};         \
+  done
+</code></pre>
+
+<h2>Downloads</h2>
+
+<footer>
+Last Modified: 2020 Aug 20
+</footer>
+</body>
+</html>
