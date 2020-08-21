@@ -70,7 +70,7 @@ breadcrumbs and a date stamp to each HTML document rendered.
 
 [cpan-markdown]: https://metacpan.org/pod/Text::Markdown
 [fireball-markdown]: https://daringfireball.net/projects/markdown
-[github-kzoo-makefile]: https://github.com/kzootech/kzoo.tech/blob/master/Makefile
+[github-kzoo-makefile]: https://github.com/kzootech/kzoo.tech/blob/main/Makefile
 [openbsd-man-httpd]: https://man.openbsd.org/httpd
 [openbsd-man-make]: https://man.openbsd.org/make
 [hawthorn-make]: https://johnhawthorn.com/2018/01/this-website-is-a-makefile/
