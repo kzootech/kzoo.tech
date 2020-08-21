@@ -19,7 +19,7 @@ locally to this location.
 This file contains some additional methods for adding
 breadcrumbs and a date stamp to each HTML document rendered.
 
-include(template.pl)
+esyscmd(`sed -e "s/^/	/" template.pl')
 
 ## Makefile.site
 
