@@ -8,7 +8,7 @@ pages, which can be served using any web server, such as OpenBSD's
 
 The website generator consists of three critical files:
 	
-* Makefile - the build script
+* [Makefile][github-kzoo-makefile] - the build script
 * template.pl - converts markdown to html
 * Makefile.site - site-specific settings
 
@@ -70,6 +70,7 @@ breadcrumbs and a date stamp to each HTML document rendered.
 
 [cpan-markdown]: https://metacpan.org/pod/Text::Markdown
 [fireball-markdown]: https://daringfireball.net/projects/markdown
+[github-kzoo-makefile]: https://github.com/kzootech/kzoo.tech/blob/master/Makefile
 [openbsd-man-httpd]: https://man.openbsd.org/httpd
 [openbsd-man-make]: https://man.openbsd.org/make
 [hawthorn-make]: https://johnhawthorn.com/2018/01/this-website-is-a-makefile/
