@@ -1,10 +1,11 @@
 # Building a Makefile-based Website
-This guide describes a [Makefile-based][openbsd-man-make] website generator 
-written to work with tools that are typically found on a "stock" BSD
-installation. The generator parses [Markdown][fireball-markdown] files into HTML
-pages, which can be served using any web server, such as OpenBSD's 
-[httpd(8)][openbsd-man-make]. This guide loosely based on John Hawthorn's 
-[This Website is a Makefile][hawthorn-make] article.
+This guide describes the [Makefile-based][openbsd-man-make] website generator 
+used on this website. It is written to work with tools that are typically found
+on a "stock" BSD installation. The generator parses 
+[Markdown][fireball-markdown] files into HTML pages, which can be served using 
+any web server, such as OpenBSD's  [httpd(8)][openbsd-man-make]. This guide 
+loosely based on John Hawthorn's  [This Website is a Makefile][hawthorn-make] 
+article.
 
 The website generator consists of three critical files:
 	
@@ -71,6 +72,7 @@ breadcrumbs and a date stamp to each HTML document rendered.
 [cpan-markdown]: https://metacpan.org/pod/Text::Markdown
 [fireball-markdown]: https://daringfireball.net/projects/markdown
 [github-kzoo-makefile]: https://github.com/kzootech/kzoo.tech/blob/main/Makefile
+[github-kzoo-template]: https://github.com/kzootech/kzoo.tech/blob/main/template.pl
 [openbsd-man-httpd]: https://man.openbsd.org/httpd
 [openbsd-man-make]: https://man.openbsd.org/make
 [hawthorn-make]: https://johnhawthorn.com/2018/01/this-website-is-a-makefile/
