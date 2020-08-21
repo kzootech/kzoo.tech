@@ -58,19 +58,27 @@
 <body>
 <header>
 [<a href="https://kzoo.tech">kzoo.tech</a>]
- / [<a href='https://kzoo.tech/html'>html</a>]
- / [<a href='https://kzoo.tech/html/make-website'>make-website</a>]
- / [<a href='https://kzoo.tech/html/make-website/'></a>]
+ / [<a href='https://kzoo.tech/src'>src</a>]
+ / [<a href='https://kzoo.tech/src/'></a>]
+ / [<a href='https://kzoo.tech/src//make-website'>make-website</a>]
 
 </header>
 <h1>Building a Makefile-based Website</h1>
 
-<p>This guide documents a <a href="https://man.openbsd.org/make">Makefile-based</a> website generator 
+<p>This guide describes a <a href="https://man.openbsd.org/make">Makefile-based</a> website generator 
 written to work with tools that are typically found on a "stock" BSD
 installation. The generator parses <a href="https://daringfireball.net/projects/markdown">Markdown</a> files into HTML
 pages, which can be served using any web server, such as OpenBSD's 
 <a href="https://man.openbsd.org/make">httpd(8)</a>. This guide loosely based on John Hawthorn's 
 <a href="https://johnhawthorn.com/2018/01/this-website-is-a-makefile/">This Website is a Makefile</a> article.</p>
+
+<p>The website generator consists of three critical files:</p>
+
+<ul>
+<li>Makefile - the build script</li>
+<li>template.pl - converts markdown to html</li>
+<li>Makefile.site - site-specific settings</li>
+</ul>
 
 <h2>template.pl</h2>
 
@@ -85,129 +93,6 @@ locally to this location.</p>
 
 <p>This file contains some additional methods for adding
 breadcrumbs and a date stamp to each HTML document rendered.</p>
-
-<pre><code>#!/usr/bin/perl
-# file: bin/render.pl
-# auth: Andrew Alm &lt;contact@kzoo.tech&gt;
-# desc: HTML rendering scripts for kzoo.tech websites which converts markdown
-#       files into stand-alone HTML documents.
-use 5.10.0;
-use strict;
-use warnings;
-
-# modules
-use File::Spec;
-use POSIX;
-use Text::Markdown;
-
-sub breadcrumbs { # navigational breadcrumbs
-  my ($vol, $dirs, $file) = File::Spec-&gt;splitpath(@_);
-  my $url = "https://kzoo.tech";
-  my $html = "[&lt;a href=\"$url\"&gt;kzoo.tech&lt;/a&gt;]\n";
-
-  foreach my $dir (File::Spec-&gt;splitdir($dirs)) {
-    $url  .= "/$dir";
-    $html .= " / [&lt;a href='$url'&gt;$dir&lt;/a&gt;]\n";
-  }
-
-  $file =~ s/\.md//;
-  if ("index" ne $file) {
-    $html .= " / [&lt;a href='$url/$file'&gt;$file&lt;/a&gt;]\n";
-  }
-
-  return $html;
-}
-
-sub datestamp { # modify time of file
-  my $date = POSIX::strftime("%Y %b %d", localtime((stat($_[0]))[9]));
-  return "Last Modified: $date";
-}
-
-sub markdown { # generate html from md
-  my $md = Text::Markdown-&gt;new(empty_element_suffix =&gt; '&gt;', tab_width =&gt; 2); 
-  return $md-&gt;markdown($_[0]);
-}
-
-# render html 
-if (0 != $#ARGV) { # 1 argument only
-  die "usage: render.pl [file]";
-}
-
-open my $fh, "&lt;", $ARGV[0] or die "cannot read file";
-my $header  = breadcrumbs($ARGV[0]);
-my $content = markdown(do { local $/; &lt;$fh&gt; });
-my $footer  = datestamp($ARGV[0]);
-
-print &lt;&lt;EOF;
-&lt;!DOCTYPE html&gt;
-&lt;html&gt;
-&lt;head&gt;
-  &lt;title&gt;kzoo.tech&lt;/title&gt;
-
-  &lt;style&gt;
-    :root {
-      --palette1: #f2f3f0; /* white */
-      --palette2: #8e8d80; /* olive */
-      --palette3: #939aa0; /* grey */
-      --palette4: #876759; /* brown */
-      --palette5: #3a3336; /* black */
-    }
-
-    body {
-      background-color: var(--palette5);
-      color: var(--palette2);
-      margin: 5em auto;
-      max-width: 35em;
-    }
-
-    h1,h2,h3,h4,h5 {
-      color: var(--palette4);
-    }
-
-    a {
-      color: var(--palette3);
-    }
-
-    code {
-      color: var(--palette1);
-      background-color: rgba(0,0,0,.5);
-      display: block;
-      padding: 1em;
-      overflow: hidden;
-      font-size: small;
-    }
-
-    header {
-      background-color: var(--palette5);
-      position: fixed;
-      top: 0;
-      margin: 0 auto;
-      width: 50em;
-      padding: 1em 0;
-      vertical-align: bottom;
-      font-size: small;
-      user-select: none;
-    }
-
-    footer {
-      text-align: right;
-      font-style: italic;
-      font-size: small;
-    }
-  &lt;/style&gt;
-&lt;/head&gt;
-&lt;body&gt;
-&lt;header&gt;
-$header
-&lt;/header&gt;
-$content
-&lt;footer&gt;
-$footer
-&lt;/footer&gt;
-&lt;/body&gt;
-&lt;/html&gt;
-EOF
-</code></pre>
 
 <h2>Makefile.site</h2>
 

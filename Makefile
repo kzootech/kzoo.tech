@@ -1,25 +1,23 @@
 .PHONY: all clean preview publish
 .DEFAULT: all
 
-.include "Makefile.site"
-
-# commands
-SRC   != find . -type f -name "*.md" ! -name "index.md" | sed "s/\.\///g"
+# default commands
+SRC   != find src -type f -name "*.md" ! -name "index.md" | sed "s/src\///g"
 PERL  := PERL5LIB=perl5lib/ perl
 RSYNC := openrsync --rsync-path=openrsync
+
+.include "Makefile.site"
 
 # render html
 all: $(SRC:%.md=html/%/index.html) html/index.html
 
-html/index.html: index.md template.pl
-	$(PERL) template.pl index.md > html/index.html
+html/index.html: src/index.md template.pl
+	$(PERL) template.pl src/index.md > html/index.html
 
 .for page in $(SRC:%.md=%)
-html/$(page)/index.html: $(page).md template.pl
+html/$(page)/index.html: src/$(page).md template.pl
 	mkdir -p html/$(page)
-	m4 $(page).md > html/$(page)/index.md
-	$(PERL) template.pl html/$(page)/index.md > html/$(page)/index.html
-	rm html/$(page)/index.md
+	$(PERL) template.pl src/$(page).md > html/$(page)/index.html
 .endfor
 
 # publish/preview using rsync; requires user-interaction
