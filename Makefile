@@ -27,7 +27,7 @@ preview:
 publish:
 	-git add *
 	-git commit
-	-git push -u github master
+	-git push -u github main 
 	$(RSYNC) -r --del html/ $(RELEASE-DIR)/
 
 # remove build files
