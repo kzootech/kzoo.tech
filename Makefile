@@ -1,8 +1,13 @@
 .PHONY: all clean preview publish
 .DEFAULT: all
 
+.poison empty (PREVIEW-DIR)
+.poison empty (PUBLISH-DIR)
+
 # default settings
-TOPDIR != pwd
+TOPDIR      != pwd
+PREVIEW-CMD := true
+PUBLISH-CMD := true
 
 # default commands
 SRC   != find src/ -type f -name "*.md" ! -name "index.md" | sed "s/src\///g"
@@ -25,13 +30,12 @@ html/$(page)/index.html: src/$(page).md template.pl
 
 # publish/preview using rsync; requires user-interaction
 preview:
+	$(PREVIEW-CMD)
 	$(RSYNC) -r --del html/ $(PREVIEW-DIR)/
 
 publish:
-	-git add *
-	-git commit
-	-git push -u github main 
-	$(RSYNC) -r --del html/ $(RELEASE-DIR)/
+	$(PUBLISH-CMD)
+	$(RSYNC) -r --del html/ $(PUBLISH-DIR)/
 
 # remove build files
 clean:
