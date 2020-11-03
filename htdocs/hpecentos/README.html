@@ -1,0 +1,201 @@
+<!DOCTYPE html>
+<html>
+<head>
+	<title>makeweb</title>
+	<link rel="stylesheet" href="/style.css">
+</head>
+<body>
+	<header>[<a href="/">kzoo.tech</a>] / [<a href='/hpecentos'>hpecentos</a>]</header>
+	<article><h1>Installing CentOS 8 on HPE Gen10 Systems</h1>
+
+<p>This guide provides notes on installing and configuring <a href="https://wiki.centos.org/Manuals/ReleaseNotes/CentOSLinux8">CentOS 8</a> on 
+an <a href="https://h20195.www2.hpe.com/v2/GetDocument.aspx?docname=a00053820enw">HPE Proliant DL20 Gen10</a> 1U rackmount server. The 
+configuration is intended for a lightweight KVM-based virtualization hypervisor 
+with a web-based admin interface.</p>
+
+<p>Note, this guide--and all related files--can be downloaded from the link 
+provided in the downloads section. This guide is actively maintained and may 
+be revised, check <a href="https://kzoo.tech/hpecentos">https://kzoo.tech/hpecentos</a> for
+the most recent version.</p>
+
+<h2>Hardware Configuration</h2>
+
+<p>The Proliant DL20 Gen10 may be equipped with various OEM 
+<a href="https://support.hpe.com/hpesc/public/docDisplay?docLocale=en_US&amp;docId=emr_na-a00059857en_us">option parts</a> which is supported by HPE. Third-party 
+hardware is not well-supported by HPE and may cause issues  with thermal sensor
+readings.</p>
+
+<p>The following hardware is configured on this system:</p>
+
+<ul>
+<li>Processor: Intel Xeon E-2224 @ 3.40GHz</li>
+<li>Memory: 2x 8GB DDR4 2666MHz ECC</li>
+<li>Storage: 1TB Samsung EVO 870 SSD</li>
+<li>Option Parts: HPE Dedicated iLO Port/M.2 NVMe SSD/COM Port Upgrade Kit</li>
+</ul>
+
+<p>Note that third-party M.2 SSD drives may cause high system fan speeds
+and will operate significantly <a href="https://www.reddit.com/r/homelab/comments/ay1vuw/my_hpe_dl20_gen10_is_loooud/">louder than normal</a> at idle. 
+This is caused by a missing temperature reading from the third-party drive. An 
+<a href="https://support.hpe.com/hpesc/public/docDisplay?docId=a00060996en_us&amp;docLocale=en_US">official HPE advisory</a> recommends using only OEM-suplied
+M.2 SSD drives.</p>
+
+<h2>BIOS/Platform Configuration</h2>
+
+<p>The BIOS/Platform Configuration can be accessed either through a keyboard, mouse 
+and monitor; or though the <a href="https://support.hpe.com/hpesc/public/docDisplay?docId=a00018324en_us">iLO5 Remote Console</a> web interface.
+Further information about configuring the system can be found in the
+<a href="https://support.hpe.com/hpesc/public/docDisplay?docId=a00016407en_us">UEFI Utilities</a> user guide.</p>
+
+<h3>SATA Controller Options</h3>
+
+<p>The HPE Smart Array S100i SR Gen10 software RAID controller is not supported by
+CentOS 8. The Embedded SATA Configuration should be set to <code>SATA ACHI Support</code>.</p>
+
+<p><img src="bios_sata.jpg" alt="Sata Controller Options"></p>
+
+<h2>System Installation</h2>
+
+<p>The provided <a href="hpecentos.cfg.example">hpecentos.cfg.example</a> configuration file 
+should be modified for the target system and then used to perform an <a href="https://docs.centos.org/en-US/8-docs/advanced-install/assembly_starting-kickstart-installations/">automated
+installation using Kickstart</a>. The following is an example 
+boot option for fetching the kickstart file from web server.</p>
+
+<pre><code>setparams 'Install CentOS Linux 8'
+  linuxefi /images/pxeboot/vmlinuz inst.stage2=hd:LABEL=CentOS-8-2 x86_64-dvd \
+    quiet inst.ip=eno1:dhcp inst.ks=https://abc.xyz/hpecentos.cfg
+  initrdefi /images/pxeboot/initrd.img
+</code></pre>
+
+<p>Manual installation is also possible, however the iLO Remote Console is only
+compatible with text mode. Consider using a monitor or 
+<a href="https://docs.centos.org/en-US/8-docs/advanced-install/assembly_performing-a-remote-installation-using-vnc/#performing-a-rhel-install-in-vnc-direct-mode_performing-a-remote-installation-using-vnc">direct VNC</a> for manual installations.</p>
+
+<p>Note that using the iLO5 Virtual Media operates very slowly and may only work
+with text mode installation. Using USB boot media is recommended.</p>
+
+<p>The <a href="hpecentos.cfg.example">hpecentos.cfg.example</a> kickstart file provided is 
+designed for the specific hardware configuration listed above and should be 
+modified as needed. The sections below describe parts of the file. More 
+information can be found in the 
+<a href="https://docs.centos.org/en-US/8-docs/advanced-install/assembly_kickstart-commands-and-options-reference/">Kickstart Commands and Options Reference</a> documentation.</p>
+
+<h3>Localization</h3>
+
+<p>The keyboard layout, default language, timezone and hostname should be adjusted
+for each installation's needs.</p>
+
+<h3>Accounts</h3>
+
+<p>A local default <code>admin</code> account, which is part of the <code>wheel</code> group is created. 
+This is the account that can be used to login to the <a href="https://cockpit-project.org">Cockpit</a>
+web-interface after installation.</p>
+
+<p>The default <code>root</code> and <code>admin</code> passwords should be changed prior to 
+installation.</p>
+
+<h3>Partitioning</h3>
+
+<p>A reserve of 10% of the nominal drive capacity is left unallocated. A 256MB 
+<code>/boot/efi</code> and a 1GB <code>/boot</code> partition are created to faciliate UEFI booting. 
+An additional 16GB partition is reserved for swap.</p>
+
+<p>The remaining 900GB is used for an LVM Volume Group. Within this volume group,
+the following paritions are allocated:</p>
+
+<ul>
+<li><code>/</code> 25GB (ext4)</li>
+<li><code>/tmp</code> 25GB (ext4)</li>
+<li><code>/home</code> 50GB (ext4)</li>
+<li><code>/var</code> 750GB (ext4) </li>
+</ul>
+
+<p>Note that, a large <code>/var</code>,<code>/var/lib</code>, or <code>/var/lib/libvirt</code> is necessary to 
+accommodate the storage of VM images on the system. Approximately 50GB of the 
+volume group is left unallocated for future use.</p>
+
+<h3>Networking</h3>
+
+<p>The installation process assumes that a DHCP network connection with access to
+the internet is avaiable on <code>eno1</code> during installation.</p>
+
+<h3>Packages</h3>
+
+<p>The following packages should be marked for installation:</p>
+
+<ul>
+<li><code>@^virtualization-host-environment</code>,</li>
+<li><code>kexec-tools</code>,</li>
+<li><code>cockpit</code>,</li>
+<li><code>cockpit-machines</code>,</li>
+<li><code>cockpit-storaged</code>, and</li>
+<li><code>amsd</code>.</li>
+</ul>
+
+<p>The <code>amsd</code> package is available from 
+<a href="https://downloads.linux.hpe.com/SDR/project/mcp/">HPE Management Component Pack</a> repository. This package provides
+out-of-band communication of server health information to the iLO5 Agentless 
+Management Service (AMS). According to an 
+<a href="https://support.hpe.com/hpesc/public/docDisplay?docLocale=en_US&amp;docId=emr_na-a00083154en_us">HPE Customer Advisory</a>, this package is required on CentOS to 
+provide correct temperature data to the AMS, which controls system fan speeds.</p>
+
+<h2>System Configuration</h2>
+
+<p>After the system installation and first-time boot initalization have completed,
+the web-interface can be accessed from the address <code>https://w.x.y.z:9090/</code>. To
+login use the username <code>admin</code> and the configured password.</p>
+
+<p><img src="cockpit_login.jpg" alt="Login Screen"></p>
+
+<p>More information about the web-interface can be found on the Cockpit Project's
+<a href="https://cockpit-project.org">website</a>.</p>
+
+<h3>Virtual Machines</h3>
+
+<p>Virtual machines can be created and imported in the web-interface by selecting
+<code>Virtual Machines</code> and following the user interface. </p>
+
+<p><img src="cockpit_virt.jpg" alt="Virtual Machines Screen"></p>
+
+<p>More information about
+virtual machines can be found in the <a href="https://access.redhat.com/documentation/en-us/red_hat_enterprise_linux/8/html/configuring_and_managing_virtualization/getting-started-with-virtualization-in-rhel-8_configuring-and-managing-virtualization">documentation</a> for RHEL 8.</p>
+
+<h3>Automatic Updates</h3>
+
+<p>Automatic updates can be enabled in the web-interface by selecting <code>Software 
+Updates</code> and turning on Automatic updates.</p>
+
+<p><img src="cockpit_autoupdate.jpg" alt="Automatic Updates Screen"></p>
+
+<p>Automatic updates requires installation of the <code>dnf-automatic</code> package. Enabling
+automatic updates will prompt to install this package.</p>
+
+<h2>Errata</h2>
+
+<p>Corrections and updates should be sent to <a href="&#x6D;&#97;&#105;&#x6C;&#x74;&#x6F;:&#99;&#x6F;&#x6E;&#x74;&#x61;&#99;t&#64;&#107;&#x7A;&#111;&#x6F;&#46;&#x74;&#101;&#99;&#104;">&#99;&#x6F;&#x6E;&#x74;&#x61;&#99;t&#64;&#107;&#x7A;&#111;&#x6F;&#46;&#x74;&#101;&#99;&#104;</a>. Provide as many 
+details as possible when reporting corrections and updates.</p>
+
+<p>Before submitting a correction be sure you are using the latest version of this
+guide at <a href="https://kzoo.tech/hpecentos">https://kzoo.tech/hpecentos</a>.</p>
+
+<h2>Download</h2>
+
+<ul>
+<li><a href="https://kzoo.tech/hpecentos-1.0.0.tgz">hpecentos-1.0.0.tgz (356 KB)</a></li>
+<li><a href="SHA256">SHA256</a></li>
+</ul>
+
+<h2>History</h2>
+
+<p><code>1.0.0 - Initial revision. (02-Nov-2020)</code></p>
+
+<h2>Copyright</h2>
+
+<p>Copyright (c) 2020, Andrew Alm &lt;<a href="&#x6D;&#x61;&#x69;&#x6C;&#116;o:&#x63;&#x6F;&#x6E;&#116;&#x61;&#99;&#x74;&#64;&#107;&#122;&#111;&#111;&#46;&#x74;&#x65;&#99;&#x68;">&#x63;&#x6F;&#x6E;&#116;&#x61;&#99;&#x74;&#64;&#107;&#122;&#111;&#111;&#46;&#x74;&#x65;&#99;&#x68;</a>&gt;.</p>
+
+<p>This work is licensed under a <a href="http://creativecommons.org/licenses/by-sa/4.0/">Creative Commons Attribution-ShareAlike 4.0
+International License</a>.</p>
+</article>
+	<footer>Last Updated: 02-Nov-2020</footer>
+</body>
+</html>

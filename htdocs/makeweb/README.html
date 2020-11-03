@@ -1,0 +1,168 @@
+<!DOCTYPE html>
+<html>
+<head>
+	<title>makeweb</title>
+	<link rel="stylesheet" href="/style.css">
+</head>
+<body>
+	<header>[<a href="/">kzoo.tech</a>] / [<a href='/makeweb'>makeweb</a>]</header>
+	<article><h1>makeweb: A static website generator</h1>
+
+<p>Makeweb is a simple <a href="https://man.openbsd.org/make">Makefile-based</a> static website generator
+designed to work on a modern UNIX system. The generator parses
+<a href="https://daringfireball.net/projects/markdown">Markdown</a> files into <a href="https://developer.mozilla.org/en-US/docs/Web/Guide/HTML/HTML5">HTML5</a> documents, which can
+be hosted with any web server. Major features of makeweb include:</p>
+
+<ul>
+<li>Incremental build system;</li>
+<li>Makefile-based configuration;</li>
+<li>Markdown-based source files;</li>
+<li>Perl-based template and seperate CSS stylesheet.</li>
+</ul>
+
+<p>This utility was originally based on John Hawthorn's 
+<a href="https://johnhawthorn.com/2018/01/this-website-is-a-makefile/">This Website is a Makefile</a> article.</p>
+
+<h2>Prerequisites</h2>
+
+<p>A modern UNIX system should have all of the required software pre-installated. 
+However, ensure the following software is installed before proceeding:</p>
+
+<ul>
+<li><a href="https://perl.org">Perl</a> (>=5.10.0);</li>
+<li><a href="https://man.openbsd.org/make">make(1)</a>.</li>
+</ul>
+
+<p>Note that a web server, such as <a href="https://man.openbsd.org/httpd">httpd(8)</a>, is needed to 
+serve the HTML documents that are generated. Configuring a web server is not 
+covered in this documentation.</p>
+
+<p>This software was developed and tested using <a href="https://openbsd.org/67.html">OpenBSD 6.7</a>.</p>
+
+<h2>Usage</h2>
+
+<p>For every file with the <code>.md</code> extension in the <code>src/</code> tree, an <code>index.html</code> HTML 
+document is generated in the <code>htdocs/</code> tree. This document will be located in a
+folder with the same name as the Markdown file. For example, <code>src/foo/bar.md</code>
+will produce <code>htdocs/foo/bar/index.html</code>. One exception to this rule is
+<code>src/index.md</code>, which generates <code>htdocs/index.html</code>. </p>
+
+<p>Any non-<code>.md</code> file in the <code>src/</code> tree will be copied to the <code>htdocs/</code> tree
+during the normal build process. </p>
+
+<p>HTML documents are generated and published by using <a href="https://man.openbsd.org/make">make(1)</a>.
+The following targets are available for use:</p>
+
+<ul>
+<li><p><code>all</code> <em>(default)</em></p>
+
+<p>Generates all HTML documents and copies all assets in the <code>src/</code> directory
+tree to the <code>htdocs/</code> directory. This is the default target.</p></li>
+<li><p><code>clean</code></p>
+
+<p>Empties the <code>htdocs/</code> directory.</p></li>
+<li><p><code>htdocs</code></p>
+
+<p>Copies all non-Markdown files in the <code>src/</code> directory tree to the <code>htdocs/</code>
+directory.</p></li>
+<li><p><code>html</code></p>
+
+<p>Generates HTML documents from Markdown files in the <code>src/</code> tree. All documents
+will be stored in the <code>htdocs/</code> as described above. During the build process, 
+<code>style.css</code> will be copied to <code>htdocs/style.css</code>.</p></li>
+<li><p><code>preview</code></p>
+
+<p>Publishes <code>htdocs/</code> to the preview directory specified in the <code>Makefile.site</code> 
+configuration file. <em>If no directory is specified, an error will occur.</em></p></li>
+<li><p><code>publish</code></p>
+
+<p>Publishes <code>htdocs/</code> to the web root directory specified in the <code>Makefile.site</code>
+configuration file. <em>If no directory is specified, an error will occur.</em></p></li>
+</ul>
+
+<p>Additional targets exist, which are triggered before each target listed above. 
+These can be customized in the <code>Makefile.site</code> configuration file and are
+described in more detail below.</p>
+
+<p>Makeweb comes with a standard <code>template.pl</code> and <code>style.css</code>,  which can be 
+modified as required. The <code>publish</code> and <code>preview</code> targets will trigger errors 
+unless they are defined and non-empty in the <code>Makefile.site</code> configuration file.</p>
+
+<h2>Configuration</h2>
+
+<p>Makeweb can be configured by editing the <code>Makefile.site</code> configuration file. 
+This file is able to set or override any variable used by the <code>Makefile</code>
+recipe. The default <code>Makefile.site</code> configuration file contains configuration 
+examples and documents all variables which can be overridden. The <code>PREVIEW-DIR</code> 
+and <code>PUBLISH-DIR</code> variables must be set, otherwise the <code>preview</code> and <code>publish</code> 
+targets will cause an error to occur.</p>
+
+<p>Each target listed above has an additional target, which is trigged before 
+execution of the original target. Custom recipes for these targets can be
+created in <code>Makefile.site</code> in order to customize the build process. If a
+custom target fails, then the primary target will not execute. The following
+custom targets are available: <code>on-all</code>, <code>on-assets</code>, <code>on-build</code>, <code>on-clean</code>,
+<code>on-preview</code>, <code>on-publish</code>.</p>
+
+<p>The <code>preview</code> and publish <code>targets</code> use rsync and so both local and remote 
+directories can be used. Remote directories may require user interactive for 
+password input. </p>
+
+<h2>Template</h2>
+
+<p>The file <code>template.pl</code> is a Perl script which generates an HTML5 document from
+a Markdown file, passed as a command line argument to the script. The default
+template includes basic <code>breadcrumb</code> and <code>datestamp</code> functions. Modifying this
+file will cause all pages to be re-generated on the next build.</p>
+
+<p>Note that this script uses the <a href="https://metacpan.org/pod/Text::Markdown">Text::Markdown</a> Perl module to 
+convert Markdown syntax into HTML. This module is included in the <code>perl5lib/</code>
+directory.</p>
+
+<h2>Stylesheet</h2>
+
+<p>The default template generates HTML documents which will link to the
+<code>src/style.css</code> <a href="https://developer.mozilla.org/en-US/docs/Web/CSS">CSS</a> file. Modifying this file will affect the 
+presentation of each generated HTML document, however re-building all HTML 
+documents is not necessary.</p>
+
+<h2>Bugs</h2>
+
+<p>Bug reports should be sent to <a href="&#x6D;&#x61;&#x69;l&#x74;&#x6F;:&#99;&#111;&#110;&#116;&#97;&#99;&#116;&#64;&#107;&#122;o&#111;&#x2E;&#x74;e&#99;&#x68;">&#99;&#111;&#110;&#116;&#97;&#99;&#116;&#64;&#107;&#122;o&#111;&#x2E;&#x74;e&#99;&#x68;</a>. Please provide as many
+details (operating system, software versions, etc) as possible when reporting 
+bugs. </p>
+
+<p>Before submitting a report, be sure you are using the lastest release from
+<a href="https://kzoo.tech/makeweb">https://kzoo.tech/makeweb</a>.</p>
+
+<h2>Downloads</h2>
+
+<ul>
+<li><a href="https://kzoo.tech/makeweb/makeweb1a.tgz">makeweb1a.tgz</a> (21 kB)</li>
+</ul>
+
+<h2>History</h2>
+
+<p><code>2020-Aug-30, Release 1a</code></p>
+
+<p><em>Initial release.</em></p>
+
+<h2>Copyright</h2>
+
+<p>Copyright (c) 2020, Andrew Alm &lt;<a href="https://kzoo.tech">https://kzoo.tech</a>></p>
+
+<p>Permission to use, copy, modify, and/or distribute this software for any
+purpose with or without fee is hereby granted, provided that the above
+copyright notice and this permission notice appear in all copies.</p>
+
+<p>THE SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL WARRANTIES
+WITH REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF
+MERCHANTABILITY AND FITNESS. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR
+ANY SPECIAL, DIRECT, INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES
+WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN
+ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
+OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.</p>
+</article>
+	<footer>Last Updated: 02-Nov-2020</footer>
+</body>
+</html>
