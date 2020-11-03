@@ -1,8 +1,24 @@
 #!/usr/bin/perl
-# file: bin/render.pl
-# auth: Andrew Alm <contact@kzoo.tech>
-# desc: HTML rendering scripts for kzoo.tech websites which converts markdown
-#       files into stand-alone HTML documents.
+# file: template.pl
+# auth: Andrew Alm <https://kzoo.tech>
+# desc: Generates and HTML5 document from the Markdown file passed as a command
+#       line argument. See README.md for further information.
+#
+# Copyright (c) 2020, Andrew Alm <https://kzoo.tech>
+#
+# Permission to use, copy, modify, and/or distribute this software for any
+# purpose with or without fee is hereby granted, provided that the above
+# copyright notice and this permission notice appear in all copies.
+#
+# THE SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL WARRANTIES WITH
+# REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF MERCHANTABILITY 
+# AND FITNESS. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR ANY SPECIAL, DIRECT, 
+# INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES WHATSOEVER RESULTING FROM 
+# LOSS OF USE, DATA OR PROFITS, WHETHER IN AN ACTION OF CONTRACT, NEGLIGENCE OR
+# OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR 
+# PERFORMANCE OF THIS SOFTWARE.
+#
+
 use 5.10.0;
 use strict;
 use warnings;
@@ -12,110 +28,59 @@ use File::Spec;
 use POSIX;
 use Text::Markdown;
 
+# globals
+my $title = "kzoo.tech";
+
 sub breadcrumbs { # navigational breadcrumbs
 	my ($vol, $dirs, $file) = File::Spec->splitpath(@_);
-	my $url = "https://kzoo.tech";
-	my $html = "[<a href=\"$url\">kzoo.tech</a>]\n";
+	my $url = "";
+	my $html = "[<a href=\"$url/\">$title</a>]";
 
 	foreach my $dir (File::Spec->splitdir($dirs)) {
+		next if "htdocs" eq $dir || "" eq $dir;
 		$url  .= "/$dir";
-		$html .= " / [<a href='$url'>$dir</a>]\n";
+		$html .= " / [<a href='$url'>$dir</a>]";
 	}
 
-	$file =~ s/\.md//;
-	if ("index" ne $file) {
-		$html .= " / [<a href='$url/$file'>$file</a>]\n";
+	$file =~ s/\.md//; # remove file extension 
+	if ("README" ne $file) {
+		$html .= " / [<a href='$url/$file'>$file</a>]";
 	}
 
 	return $html;
 }
 
 sub datestamp { # modify time of file
-	my $date = POSIX::strftime("%Y %b %d", localtime((stat($_[0]))[9]));
-	return "Last Modified: $date";
+	my $date = POSIX::strftime("%d-%b-%Y", localtime((stat($_[0]))[9]));
+	return "$date";
 }
 
 sub markdown { # generate html from md
+	open my $fh, "<", $_[0] or die "cannot read file";
 	my $md = Text::Markdown->new(empty_element_suffix => '>', tab_width => 2); 
-	return $md->markdown($_[0]);
+	return $md->markdown(do { local $/; <$fh> } );
 }
 
 # render html 
 if (0 != $#ARGV) { # 1 argument only
-	die "usage: render.pl [file]";
+	die "usage: template.pl [file]";
 }
 
-open my $fh, "<", $ARGV[0] or die "cannot read file";
 my $header  = breadcrumbs($ARGV[0]);
-my $content = markdown(do { local $/; <$fh> });
+my $article = markdown($ARGV[0]);
 my $footer  = datestamp($ARGV[0]);
 
 print <<EOF;
 <!DOCTYPE html>
 <html>
 <head>
-	<title>kzoo.tech</title>
-
-	<style>
-		:root {
-			--palette1: #f2f3f0; /* white */
-			--palette2: #8e8d80; /* olive */
-			--palette3: #939aa0; /* grey */
-			--palette4: #876759; /* brown */
-			--palette5: #3a3336; /* black */
-		}
-
-		body {
-			background-color: var(--palette5);
-			color: var(--palette2);
-			margin: 5em auto;
-			max-width: 35em;
-		}
-
-		h1,h2,h3,h4,h5 {
-			color: var(--palette4);
-		}
-
-		a {
-			color: var(--palette3);
-		}
-
-		code {
-			color: var(--palette1);
-			background-color: rgba(0,0,0,.5);
-			display: block;
-			padding: 1em;
-			overflow: hidden;
-			font-size: small;
-		}
-
-		header {
-			background-color: var(--palette5);
-			position: fixed;
-			top: 0;
-			margin: 0 auto;
-			width: 50em;
-			padding: 1em 0;
-			vertical-align: bottom;
-			font-size: small;
-			user-select: none;
-		}
-
-		footer {
-			text-align: right;
-			font-style: italic;
-			font-size: small;
-		}
-	</style>
+	<title>makeweb</title>
+	<link rel="stylesheet" href="/style.css">
 </head>
 <body>
-<header>
-$header
-</header>
-$content
-<footer>
-$footer
-</footer>
+	<header>$header</header>
+	<article>$article</article>
+	<footer>Last Updated: $footer</footer>
 </body>
 </html>
 EOF

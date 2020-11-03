@@ -1,0 +1,68 @@
+# file: centos8-virt.cfg
+# auth: contact@kzoo.tech
+# date: 02-Nov-2020
+# desc: Kickstart installation script for HPE Proliant DL20 Gen 10 running as
+#       a web-managed virtualization hypervisor.
+#
+
+# Installer Options
+text
+firstboot --enable
+
+%anaconda
+pwpolicy root --minlen=6 --minquality=1 --notstrict --nochanges --notempty
+pwpolicy user --minlen=6 --minquality=1 --notstrict --nochanges --emptyok
+pwpolicy luks --minlen=6 --minquality=1 --notstrict --nochanges --notempty
+%end
+
+%addon com_redhat_kdump --enable --reserve-mb='auto'
+%end
+
+# Localization
+keyboard --vckeymap=us --xlayouts=''
+lang en_US.UTF-8
+timezone America/Detroit --isUtc
+network --hostname=hpecentos
+
+# Accounts 
+rootpw --plaintext password 
+user --groups=wheel --name=admin --password=password --plaintext
+
+# Partitioning
+ignoredisk --only-use=sda
+
+zerombr	
+clearpart --all --initlabel --drives=sda
+part /boot/efi --size=256  --fstype efi
+part /boot     --size=1024 --fstype ext4
+part swap      --size=16348
+part pv.01     --size=921600 --grow --ondisk=sda
+
+volgroup vg00 pv.01
+logvol /     --vgname=vg00 --fstype=ext4 --size=25600 --name=lv_root
+logvol /tmp  --vgname=vg00 --fstype=ext4 --size=25600 --name=lv_tmp
+logvol /home --vgname=vg00 --fstype=ext4 --size=51200 --name=lv_home
+logvol /var  --vgname=vg00 --fstype=ext4 --size=512000 --name=lv_var
+
+bootloader --append=" crashkernel=auto" --location=mbr --boot-drive=sda
+
+# Networking
+network --bootproto=dhcp --device=eno1 --ipv6=auto --activate
+network --bootproto=dhcp --device=eno2 --onboot=off --ipv6=auto --no-activate
+network --bootproto=dhcp --device=enp1s0f4u4 --onboot=off --ipv6=auto
+
+# Packages
+repo --name="HPE" --baseurl="https://downloads.linux.hpe.com/SDR/repo/mcp/centos/8/x86_64/current/" --install
+
+%packages
+@^virtualization-host-environment
+kexec-tools
+cockpit
+cockpit-machines
+cockpit-storaged
+amsd
+%end
+
+skipx
+services --enabled="chronyd,cockpit.socket,amsd"
+

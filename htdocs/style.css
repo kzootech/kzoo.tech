@@ -1,0 +1,71 @@
+:root {
+	--palette1: #f2f3f0; /* white */
+	--palette2: #8e8d80; /* olive */
+	--palette3: #939aa0; /* grey */
+	--palette4: #876759; /* brown */
+	--palette5: #3a3336; /* black */
+}
+
+body {
+	background-color: var(--palette5);
+	color: var(--palette2);
+	margin: 5em auto;
+	max-width: 35em;
+}
+
+h1,h2,h3,h4,h5 {
+	color: var(--palette4);
+}
+
+h1 {
+	font-size: 2em;
+}
+
+h2 {
+	font-size: 1.5em;
+}
+
+h3 {
+	font-size: 1.17em;
+}
+
+a {
+	color: var(--palette3);
+}
+
+pre {
+	background-color: rgba(0,0,0,.25);
+	overflow: hidden;
+	font-size: small;
+	padding: 1em;
+	display: block;
+}
+
+code {
+	color: var(--palette1);
+}
+
+header {
+	background-color: var(--palette5);
+	position: fixed;
+	top: 0;
+	margin: 0 auto;
+	width: 50em;
+	padding: 1em 0;
+	vertical-align: bottom;
+	font-size: small;
+	user-select: none;
+	z-index: 9999;
+}
+
+img {
+	display: block;
+	margin: 0 auto;
+	width: 90%;
+}
+
+footer {
+	text-align: right;
+	font-style: italic;
+	font-size: small;
+}

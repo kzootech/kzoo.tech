@@ -1,46 +1,43 @@
-.PHONY: all clean preview publish
-.DEFAULT: all
+# file: Makefile
+# auth: Andrew Alm <https://kzoo.tech>
+# desc: Makefile for makeweb static website generator, see README.md for further
+#       information.
+# 
+# Copyright (c) 2020, Andrew Alm <https://kzoo.tech>
+#
+# Permission to use, copy, modify, and/or distribute this software for any
+# purpose with or without fee is hereby granted, provided that the above
+# copyright notice and this permission notice appear in all copies.
+#
+# THE SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL WARRANTIES WITH
+# REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF MERCHANTABILITY 
+# AND FITNESS. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR ANY SPECIAL, DIRECT, 
+# INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES WHATSOEVER RESULTING FROM 
+# LOSS OF USE, DATA OR PROFITS, WHETHER IN AN ACTION OF CONTRACT, NEGLIGENCE OR
+# OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR 
+# PERFORMANCE OF THIS SOFTWARE.
+#
 
-.poison empty (PREVIEW-DIR)
-.poison empty (PUBLISH-DIR)
+.PHONY: all clean htdocs html
+.SUFFIXES: .md .html
 
-# default settings
-TOPDIR      != pwd
-PREVIEW-CMD := true
-PUBLISH-CMD := true
+all: # default target
 
-# default commands
-SRC   != find src/ -type f -name "*.md" ! -name "index.md" | sed "s/src\///g"
-PERL  := PERL5LIB=$(TOPDIR)/perl5lib/ perl
-RSYNC := openrsync --rsync-path=openrsync
+# default commands (things not typically found /bin), assume they are in $PATH
+FIND := find 
+PERL := PERL5LIB=$(.CURDIR)/perl5lib/ perl
+
+# find all .md files in htdocs/ 
+MDFILES != $(FIND) htdocs/ -type f -name "*.md"
 
 .include "Makefile.site"
 
-# render html
-all: $(SRC:%.md=html/%/index.html) html/index.html
+all: $(MDFILES:%.md=%.html)
 
-html/index.html: src/index.md template.pl
-	cd src/; $(PERL) ../template.pl index.md > ../html/index.html
+.md.html: template.pl
+	$(PERL) template.pl $< > $@
 
-.for page in $(SRC:%.md=%)
-html/$(page)/index.html: src/$(page).md template.pl
-	mkdir -p html/$(page)
-	cd src/; $(PERL) ../template.pl $(page).md > ../html/$(page)/index.html
-.endfor
-
-# publish/preview using rsync; requires user-interaction
-preview:
-	$(PREVIEW-CMD)
-	$(RSYNC) -r --del html/ $(PREVIEW-DIR)/
-
-publish:
-	$(PUBLISH-CMD)
-	$(RSYNC) -r --del html/ $(PUBLISH-DIR)/
-
-# remove build files
+# clean htdocs 
 clean:
-	rm -rf html/index.html
-	for dir in $(SRC:%.md='%'); do \
-		rm -rf html/$${dir};         \
-	done
+	rm -f $(MDFILES:%.md=%.html)
 
